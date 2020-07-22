@@ -32,7 +32,7 @@ def group_posts(request, slug):
 
 @login_required()
 def new_post(request):
-    form = PostForm(request.POST or None)
+    form = PostForm(request.POST or None, files=request.FILES or None,)
     if form.is_valid():
         post = form.save(commit=False)
         post.author = request.user
@@ -59,9 +59,8 @@ def profile(request, username):
 
 
 def post_view(request, username, post_id):
-    post = get_object_or_404(Post, pk=post_id)
-    #post = Post.objects.get(id=post_id)
     author = get_object_or_404(User, username=username)
+    post = get_object_or_404(Post, pk=post_id, author=author)
     posts = author.post_set.all()
     count = posts.count
     form = PostForm(instance=post)
@@ -71,14 +70,29 @@ def post_view(request, username, post_id):
 
 @login_required()
 def post_edit(request, username, post_id):
-    #post = get_object_or_404(Post, pk=post_id, author__username=username)
-    post = Post.objects.get(id=post_id)
-    if request.user.username != username:
-        return redirect(f'/{post.author}/{post_id}')
-    form = PostForm(request.POST or None, instance=post)
+    author = get_object_or_404(User, username=username)
+    post = get_object_or_404(Post, pk=post_id, author=author)
+    if request.user != author:
+        return redirect('post', username=username, post_id=post_id)
+    form = PostForm(request.POST or None,
+                    files=request.FILES or None, instance=post)
     if form.is_valid():
-        post = form.save(commit=False)
-        post.author = request.user
-        post.save()
-        return redirect(f'/{username}/{post_id}')
+        form.save()
+        return redirect("post", username=request.user.username,
+                        post_id=post_id)
     return render(request, 'new.html', {'post': post, 'form': form})
+
+
+def page_not_found(request, exception):
+    # Переменная exception содержит отладочную информацию,
+    # выводить её в шаблон пользователской страницы 404 мы не станем
+    return render(
+        request,
+        "misc/404.html",
+        {"path": request.path},
+        status=404
+    )
+
+
+def server_error(request):
+    return render(request, "misc/500.html", status=500)

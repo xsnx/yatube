@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% block title %} Пользователь: {{ user.username }}{% endblock %}
 {% block header %}{{ post.author.get_full_name }}{% endblock %}
-{% block content %}
+{% block content %}.
+{% load thumbnail %}
 <main role="main" class="container">
     <div class="row">
         <div class="col-md-3 mb-3 mt-1">
@@ -43,6 +44,13 @@
                         <!-- Текст поста -->
                         {{ post.text }}
                     </p>
+
+                    <p class="card mb-3 mt-1 shadow-sm">
+                        {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
+                        <img class="card-img" src="{{ im.url }}">
+                        {% endthumbnail %}
+                    </p>
+
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="btn-group ">
                             <!-- Ссылка на страницу записи в атрибуте href-->
@@ -53,7 +61,7 @@
                         <!-- Дата публикации  -->
                         <small class="text-muted">{{ post.pub_date|date:"d M Y" }}</small>
                     </div>
-                </div>
+                </>
             </div>
             <!-- Конец блока с отдельным постом -->
             <!-- Остальные посты -->

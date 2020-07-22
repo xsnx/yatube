@@ -108,3 +108,85 @@ class TestPostViews(TestCase):
             self.assertContains(response, 'Test edit post', count=1)
 
 
+class Test_page_404_500(TestCase):
+    def setUp(self) -> None:
+        self.client = Client()
+
+    def test_page_404(self):
+        response = self.client.get('/page/404')
+        self.assertEqual(response.status_code, 301)
+
+
+class Test_post_image(TestCase):
+    def setUp(self) -> None:
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username='TestUser',
+            email='test@user.com',
+            password='12345'
+        )
+        self.client.force_login(self.user)
+        self.group = Group.objects.create(
+            title='group',
+            slug='group',
+            description='test group'
+        )
+
+    def test_image_new(self):
+        with open('posts/testfile/test.jpg', 'rb') as img:
+            response = self.client.post(reverse('new_post'),
+                                        data={'author': self.user,
+                                              'text': 'post with image',
+                                              'image': img}, follow=True)
+        self.assertRedirects(response, '/')
+        self.assertContains(response, '<img class="card-img"')
+
+    def test_image_edit(self):
+        self.client.post(reverse('new_post'),
+                         data={'author': self.user,
+                               'post_id': 1,
+                               'text': 'post image'},
+                         follow=True)
+        with open('posts/testfile/test.jpg', 'rb') as img:
+            response = self.client.post(
+                reverse('post_edit', kwargs={'username': self.user,
+                                             'post_id': 1}),
+                data={'text': 'Test with image',
+                      'group': self.group.id,
+                      'image': img},
+                follow=True)
+
+            self.assertRedirects(response, '/TestUser/1/')
+            self.assertContains(response, '<img class="card-img"')
+            resp = self.client.get('/group/group/')
+            self.assertContains(resp, '<img class="card-img"')
+
+    def test_non_image_new(self):
+        try:
+            with open('posts/testfile/test.7z', 'rb') as img:
+                self.client.post(reverse('new_post'),
+                                 data={'author': self.user,
+                                       'text': 'post with image',
+                                       'image': img}, follow=True)
+        except IOError:
+            print('IOError has occurred!')
+
+    def test_non_image_post_edit(self):
+        self.client.post(reverse('new_post'),
+                         data={'author': self.user,
+                               'post_id': 1,
+                               'text': 'post image'},
+                         follow=True)
+        try:
+            with open('posts/testfile/test.7z', 'rb') as img:
+                self.client.post(
+                    reverse('post_edit', kwargs={'username': self.user,
+                                                 'post_id': 1}),
+                    data={'text': 'Test with image',
+                          'group': self.group.id,
+                          'image': img},
+                    follow=True)
+        except IOError:
+            print('IOError has occurred!')
+
+
