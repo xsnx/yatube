@@ -20,8 +20,8 @@
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item">
                         <div class="h6 text-muted">
-                            Подписчиков: XXX <br />
-                            Подписан: XXX
+                            Подписчиков: {{following}} <br />
+                            Подписан: {{follower}}
                         </div>
                     </li>
                     <li class="list-group-item">
@@ -30,46 +30,47 @@
                             Записей: {{count}}
                         </div>
                     </li>
+                              <!-- Начало блока с  follow-->
+                    <li class="list-group-item">
+                        {% if following %}
+                        <a class="btn btn-lg btn-light"
+                           href="{% url 'profile_unfollow' author %}" role="button">
+                            Отписаться
+                        </a>
+                        {% else %}
+                        <a class="btn btn-lg btn-primary"
+                           href="{% url 'profile_follow' author %}" role="button">
+                            Подписаться
+                        </a>
+                        {% endif %}
+                    </li>
+                                <!-- Конец блока с  follow-->
                 </ul>
             </div>
         </div>
         <div class="col-md-9">
+
+
             <!-- Начало блока с отдельным постом -->
-            {% for post in page %}
-            <div class="card mb-3 mt-1 shadow-sm">
-                <div class="card-body">
-                    <p class="card-text">
-                        <!-- Ссылка на страницу автора в атрибуте href; username автора в тексте ссылки -->
-                        <a href="/{{author }}/"><strong class="d-block text-gray-dark">@{{author.get_full_name }}</strong></a>
-                        <!-- Текст поста -->
-                        {{ post.text|linebreaksbr }}
-                    </p>
 
-                        {% load thumbnail %}
-                        {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
-                        <img class="card-img" src="{{ im.url }}">
-                        {% endthumbnail %}
+    <div class="container">
+           <h1> Последние обновления на сайте</h1>
+            <!-- Вывод ленты записей -->
+                {% for post in page %}
+                  <!-- Вот он, новый include! -->
+                    {% include "includes/post_item.html"  with post=post %}
+                {% endfor %}
+    </div>
 
+        <!-- Вывод паджинатора -->
+        {% if page.has_other_pages %}
+            {% include "includes/paginator.html" with items=page paginator=paginator%}
+        {% endif %}
 
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="btn-group ">
-                            <!-- Ссылка на страницу записи в атрибуте href-->
-                            <a class="btn btn-sm text-muted" href="/{{author }}/{{post.id}}/" role="button">Добавить комментарий</a>
-                            <!-- Ссылка на редактирование, показывается только автору записи -->
-                            <a class="btn btn-sm text-muted" href="/{{author }}/{{post.id}}/edit" role="button">Редактировать</a>
-                        </div>
-                        <!-- Дата публикации  -->
-                        <small class="text-muted">{{ post.pub_date|date:"d M Y" }}</small>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
             <!-- Конец блока с отдельным постом -->
             <!-- Остальные посты -->
             <!-- Здесь постраничная навигация паджинатора -->
-            {% if page.has_other_pages %}
-            {% include "paginator.html" with items=page paginator=paginator %}
-            {% endif %}
+
         </div>
     </div>
 </main>
